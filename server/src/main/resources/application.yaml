@@ -1,0 +1,14 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: units-create-update
+          uri: http://localhost:8081
+          predicates:
+            - Method=POST,PATCH,PUT
+            - Path=/api/v1/units
+#        - id: units-get-one
+#          uri: http://localhost:8080
+#          predicates:
+#            - Method=GET
+#            - Path=/api/v1/units/{number}

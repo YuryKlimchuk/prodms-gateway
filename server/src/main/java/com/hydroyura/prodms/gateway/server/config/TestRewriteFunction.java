@@ -13,21 +13,20 @@ import reactor.core.publisher.Mono;
 @Component
 public class TestRewriteFunction implements RewriteFunction<ApiRes, ApiRes> {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
 
 
     @SneakyThrows
     @Override
     public Publisher<ApiRes> apply(ServerWebExchange serverWebExchange, ApiRes apiRes) {
-        Map data = objectMapper.readValue(objectMapper.writeValueAsString(apiRes.getData()), Map.class);
-        data.put("links", Map.of("link", "ahref", "link2", "ahgd"));
-        apiRes.setData(data);
-        
-
-
+//        Map data = objectMapper.readValue(objectMapper.writeValueAsString(apiRes.getData()), Map.class);
+//        data.put("links", Map.of("link", "ahref", "link2", "ahgd"));
+//        //apiRes.setData(data);
 
 
         return Mono.just(apiRes);
     }
+
 
 }

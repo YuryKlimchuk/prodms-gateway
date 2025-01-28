@@ -17,22 +17,18 @@ public class RoutesConfig {
 
     @Bean
     RouteLocator getUnitRoute(RouteLocatorBuilder builder) {
-        return builder.routes()
+        RouteLocator build = builder.routes()
             .route(
                 "units-get",
                 r -> r
                     .path("/api/v1/units/{number}")
                     .and()
                     .method(HttpMethod.GET)
-                    .filters( f -> f.modifyResponseBody(ApiRes.class, ApiRes.class, test))
+                    .filters(f -> f.modifyResponseBody(ApiRes.class, ApiRes.class, test))
                     .uri("http://localhost:8081"))
             .build();
+        return build;
     }
-
-    public <T> Class<ApiRes<T>> getClass(Class<ApiRes<T>> clazz) {
-        return clazz;
-    }
-
 
 
 }

@@ -1,3 +1,8 @@
+microservices:
+  urls:
+    archive: ${http://localhost:8081}
+    files: ${http://localhost:8085}
+
 server:
   port: 8085
 
@@ -10,8 +15,3 @@ spring:
           predicates:
             - Method=POST,PATCH,PUT
             - Path=/api/v1/units
-#        - id: units-get-one
-#          uri: http://localhost:8080
-#          predicates:
-#            - Method=GET
-#            - Path=/api/v1/units/{number}

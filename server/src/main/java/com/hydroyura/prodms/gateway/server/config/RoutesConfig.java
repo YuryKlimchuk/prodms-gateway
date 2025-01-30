@@ -2,17 +2,23 @@ package com.hydroyura.prodms.gateway.server.config;
 
 import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class RoutesConfig {
 
     @Autowired
     private TestRewriteFunction test;
+
+
+
 
     @Bean
     RouteLocator getUnitRoute(RouteLocatorBuilder builder) {

@@ -1,7 +1,9 @@
 package com.hydroyura.prodms.gateway.server.config;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hydroyura.prodms.gateway.server.model.api.ApiRes;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.reactivestreams.Publisher;
@@ -14,15 +16,14 @@ import reactor.core.publisher.Mono;
 public class TestRewriteFunction implements RewriteFunction<ApiRes, ApiRes> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-
+    private final JavaType mapType = TypeFactory
+        .defaultInstance()
+        .constructMapType(Map.class, String.class, Object.class);
 
     @SneakyThrows
     @Override
     public Publisher<ApiRes> apply(ServerWebExchange serverWebExchange, ApiRes apiRes) {
-//        Map data = objectMapper.readValue(objectMapper.writeValueAsString(apiRes.getData()), Map.class);
-//        data.put("links", Map.of("link", "ahref", "link2", "ahgd"));
-//        //apiRes.setData(data);
+        var data = objectMapper.readValue(objectMapper.writeValueAsString(apiRes.getData()), mapType);
 
 
         return Mono.just(apiRes);

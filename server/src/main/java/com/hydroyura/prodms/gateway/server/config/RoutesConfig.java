@@ -1,7 +1,6 @@
 package com.hydroyura.prodms.gateway.server.config;
 
-import com.hydroyura.prodms.gateway.server.model.api.ApiRes;
-import java.util.Map;
+import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;

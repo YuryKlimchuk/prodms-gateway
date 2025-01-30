@@ -3,7 +3,7 @@ package com.hydroyura.prodms.gateway.server.service.reponsemodifier;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.hydroyura.prodms.gateway.server.model.api.ApiRes;
+import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.reactivestreams.Publisher;

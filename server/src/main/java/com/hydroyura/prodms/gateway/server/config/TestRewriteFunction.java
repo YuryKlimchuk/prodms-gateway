@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import com.hydroyura.prodms.archive.client.model.res.GetUnitRes;
+import com.hydroyura.prodms.files.server.api.res.GetLatestRes;
+import com.hydroyura.prodms.gateway.server.model.res.GetUnitDetailedRes;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.reactivestreams.Publisher;
@@ -19,7 +21,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
-public class TestRewriteFunction implements RewriteFunction<ApiRes, ApiRes> {
+public class TestRewriteFunction implements RewriteFunction<ApiRes<GetUnitRes>, ApiRes<GetUnitDetailedRes>> {
 
     //@Value("${microservices.urls.files}")
     private String filesUrl = "http://localhost:8085";
@@ -31,9 +33,20 @@ public class TestRewriteFunction implements RewriteFunction<ApiRes, ApiRes> {
 
     @SneakyThrows
     @Override
-    public Publisher<ApiRes> apply(ServerWebExchange serverWebExchange, ApiRes apiRes) {
-        Map<String, Object> data = objectMapper.readValue(objectMapper.writeValueAsString(apiRes.getData()), mapType);
+    public Publisher<ApiRes<?>> apply(ServerWebExchange serverWebExchange, ApiRes<GetUnitRes> apiRes) {
+        String number = "test";
+        return Mono.zip(prepareCurrentResponse(apiRes), getUrls(number)).map(turple -> aggregate(turple.getT1(), turple.getT2()));
+    }
 
+    @SneakyThrows
+    private Mono<ApiRes<GetUnitRes>> prepareCurrentResponse(ApiRes<?> apiRes) {
+        //Map<String, Object> data = objectMapper.readValue(objectMapper.writeValueAsString(apiRes.getData()), mapType);
+        GetUnitRes data = objectMapper.readValue(objectMapper.writeValueAsString(apiRes.getData()), GetUnitRes.class);
+        return Mono.empty();
+    }
+
+    private Mono<ApiRes<GetLatestRes>> getUrls(String number) {
+        /*
         Mono<ApiRes> resMono =  WebClient.builder()
             .baseUrl(filesUrl)
             .build()
@@ -42,18 +55,16 @@ public class TestRewriteFunction implements RewriteFunction<ApiRes, ApiRes> {
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .bodyToMono(ApiRes.class);
-
-        //resMono.subscribe(System.out::println);
-
-
-        return Mono.just(apiRes);
-    }
-
-    private Mono<ApiRes<GetUnitRes>> getCurrentResponse() {
+         */
         return Mono.empty();
     }
 
-    private Mono<ApiRes<Get>>
+    private ApiRes<?> aggregate(ApiRes<GetUnitRes> archiveRes, ApiRes<GetLatestRes> filesRes) {
+        return new ApiRes<>();
+    }
+
+
+
 
 
 }

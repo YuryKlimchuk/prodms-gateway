@@ -1,7 +1,7 @@
 microservices:
   urls:
-    archive: ${http://localhost:8081}
-    files: ${http://localhost:8085}
+    archive: ${ARCHIVE_URL:http://localhost:8081}
+    files: ${FILES_URL:http://localhost:8085}
 
 server:
   port: 8085
@@ -11,7 +11,7 @@ spring:
     gateway:
       routes:
         - id: units-create-update
-          uri: http://localhost:8081
+          uri: ${microservices.urls.archive}
           predicates:
             - Method=POST,PATCH,PUT
             - Path=/api/v1/units

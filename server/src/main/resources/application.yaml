@@ -6,6 +6,10 @@ microservices:
 server:
   port: 8085
 
+logs:
+  detail:
+    enabled: ${LOGS_DETAIL_ENABLED:true}
+
 spring:
   cloud:
     gateway:

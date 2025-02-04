@@ -10,6 +10,7 @@ import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import com.hydroyura.prodms.archive.client.model.enums.UnitStatus;
 import com.hydroyura.prodms.archive.client.model.enums.UnitType;
 import com.hydroyura.prodms.archive.client.model.res.GetUnitRes;
+import java.util.Properties;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterAll;
@@ -20,8 +21,12 @@ import org.mockserver.model.HttpResponse;
 import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
+import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -35,6 +40,12 @@ class ServerTest {
     @Autowired
     private WebTestClient webTestClient;
 
+    @Autowired
+    private Properties properties;
+
+    @Autowired
+    private RouteLocator locator;
+
     @BeforeAll
     static void startServers() {
         archiveMockServer = ClientAndServer.startClientAndServer(8089);
@@ -45,6 +56,11 @@ class ServerTest {
     static void stopServers() {
         archiveMockServer.stop();
         filesMockServer.stop();
+    }
+
+    @DynamicPropertySource
+    static void tuneProperties(DynamicPropertyRegistry registry) {
+        registry.add("microservices.urls.archive", () -> "http://localhost:" + archiveMockServer.getLocalPort());
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.hydroyura.prodms.gateway.server.config;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.GatewayFilterSpec;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -17,7 +18,8 @@ public class RoutesConfig {
     private AggregationGetUnitRewriteFunction aggregationGetUnitRewriteFunction;
 
     @Bean
-    RouteLocator getUnitRoute(RouteLocatorBuilder builder) {
+    RouteLocator getUnitRoute(@Value("${microservices.urls.archive}") String archiveUrl,
+                              RouteLocatorBuilder builder) {
         return builder.routes()
             .route(
                 "units-get",
@@ -26,7 +28,7 @@ public class RoutesConfig {
                     .and()
                     .method(HttpMethod.GET)
                     .filters(this::buildAggregateFilter)
-                    .uri("http://localhost:8081"))
+                    .uri(archiveUrl))
             .build();
     }
 

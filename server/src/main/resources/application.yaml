@@ -1,6 +1,6 @@
 microservices:
   urls:
-    archive: ${ARCHIVE_URL:http://localhost:8081}
+    archive: ${ARCHIVE_URL:http://localhost:8089}
     files: ${FILES_URL:http://localhost:8085}
 
 server:

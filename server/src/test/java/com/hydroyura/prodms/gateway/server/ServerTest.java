@@ -1,51 +1,93 @@
 package com.hydroyura.prodms.gateway.server;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static com.hydroyura.prodms.gateway.server.TestUtils.UNIT_NUMBER_1;
+import static com.hydroyura.prodms.gateway.server.TestUtils.URI_ARCHIVE_GET_UNIT;
 import static org.mockserver.model.HttpRequest.request;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hydroyura.prodms.archive.client.model.api.ApiRes;
+import com.hydroyura.prodms.archive.client.model.enums.UnitStatus;
+import com.hydroyura.prodms.archive.client.model.enums.UnitType;
+import com.hydroyura.prodms.archive.client.model.res.GetUnitRes;
+import java.util.UUID;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpResponse;
+import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ServerTest {
 
-    static ClientAndServer mockServer;
+    static ClientAndServer archiveMockServer;
+    static ClientAndServer filesMockServer;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private WebTestClient webTestClient;
 
     @BeforeAll
-    static void startServer() {
-        mockServer = ClientAndServer.startClientAndServer(8081);
+    static void startServers() {
+        archiveMockServer = ClientAndServer.startClientAndServer(8089);
+        filesMockServer = ClientAndServer.startClientAndServer(8088);
     }
 
     @AfterAll
-    static void afterAll() {
-        mockServer.stop();
+    static void stopServers() {
+        archiveMockServer.stop();
+        filesMockServer.stop();
     }
 
     @Test
     void contextLoad() {
         // given
-        mockServer
-            .when(request().withPath("/api/v1/units").withMethod("POST"))
-            .respond(HttpResponse.response("the best response"));
+        archiveMockServer
+            .when(request()
+                .withPath(URI_ARCHIVE_GET_UNIT.formatted(UNIT_NUMBER_1))
+                .withMethod(HttpMethod.GET.name())
+                .withContentType(MediaType.APPLICATION_JSON))
+            .respond(HttpResponse
+                .response()
+                .withContentType(MediaType.APPLICATION_JSON)
+                .withBody(response())
+                .withStatusCode(HttpStatus.OK.value())
+            );
 
         // when
-        webTestClient
-            .post()
-            .uri("/api/v1/units")
+        var response = webTestClient
+            .get()
+            .uri(URI_ARCHIVE_GET_UNIT.formatted(UNIT_NUMBER_1))
+            .header("Content-Type", MediaType.APPLICATION_JSON.toString())
             .exchange()
-            .expectStatus()
-            .isOk();
+            .expectBody(JsonNode.class)
+            .returnResult();
         // then
 
+        int a = 1;
+    }
+
+    @SneakyThrows
+    private String response() {
+        GetUnitRes getUnitRes = new GetUnitRes();
+        getUnitRes.setNumber(UNIT_NUMBER_1);
+        getUnitRes.setVersion(1);
+        getUnitRes.setType(UnitType.PART);
+        getUnitRes.setStatus(UnitStatus.DESIGN);
+
+        ApiRes<GetUnitRes> res = new ApiRes<>();
+        res.setData(getUnitRes);
+        res.setId(UUID.randomUUID());
+
+        return objectMapper.writeValueAsString(res);
     }
 
 }

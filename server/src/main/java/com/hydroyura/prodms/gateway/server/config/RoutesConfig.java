@@ -1,5 +1,6 @@
 package com.hydroyura.prodms.gateway.server.config;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -31,7 +32,7 @@ public class RoutesConfig {
 
     private GatewayFilterSpec buildAggregateFilter(GatewayFilterSpec filterSpec) {
         return filterSpec.modifyResponseBody(
-            ApiRes.class,
+            JsonNode.class,
             ApiRes.class,
             aggregationGetUnitRewriteFunction
         );

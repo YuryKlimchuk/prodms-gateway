@@ -1,15 +1,21 @@
 package com.hydroyura.prodms.gateway.server.config;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import com.hydroyura.prodms.archive.client.model.res.GetUnitRes;
 import com.hydroyura.prodms.files.server.api.res.GetLatestRes;
 import com.hydroyura.prodms.gateway.server.model.res.GetUnitDetailedRes;
 import jakarta.annotation.PostConstruct;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
@@ -37,6 +43,10 @@ public class AggregationGetUnitRewriteFunction implements RewriteFunction<JsonNo
     //TODO: replace with bean
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final JavaType archiveResponseType = TypeFactory
+        .defaultInstance()
+        .constructParametricType(ApiRes.class, GetUnitRes.class);
+
     @PostConstruct
     void init() {
         objectMapper.registerModule(new JavaTimeModule());
@@ -44,25 +54,25 @@ public class AggregationGetUnitRewriteFunction implements RewriteFunction<JsonNo
 
     @SneakyThrows
     @Override
-    public Publisher<ApiRes> apply(ServerWebExchange serverWebExchange, JsonNode json) {
+    public Publisher<ApiRes> apply(ServerWebExchange serverWebExchange, JsonNode responseFromArchive) {
         Boolean isSuccessRequestToArchive = Optional
             .of(serverWebExchange.getResponse())
             .map(ServerHttpResponse::getStatusCode)
             .map(HttpStatusCode::is2xxSuccessful)
             .orElse(Boolean.FALSE);
 
-        if (isSuccessRequestToArchive) {
-//            log.warn("Some message");
-//            return Mono.just(apiRes);
-            throw new RuntimeException("Need to handle case when got bad result from Archive");
-        }
-
         String number = extractNumberFromRequest(serverWebExchange);
+
+        if (isSuccessRequestToArchive) {
+            Mono.zip(prepareCurrentResponse(responseFromArchive), fetchUrls(number));
+        }
+        throw new RuntimeException("Need to handle case when got bad result from Archive");
+
 
 //        return Mono
 //            .zip(prepareCurrentResponse(apiRes), getUrls(number))
 //            .map(tuple -> aggregate(tuple.getT1(), tuple.getT2()));
-        return Mono.empty();
+        //return Mono.empty();
     }
 
     //TODO: handle error
@@ -75,16 +85,26 @@ public class AggregationGetUnitRewriteFunction implements RewriteFunction<JsonNo
     }
 
     @SneakyThrows
-    private Mono<ApiRes<GetUnitRes>> prepareCurrentResponse(ApiRes<?> apiRes) {
-        GetUnitRes data = objectMapper.readValue(objectMapper.writeValueAsString(apiRes.getData()), GetUnitRes.class);
-        ApiRes<GetUnitRes> newApiRes = (ApiRes<GetUnitRes>) apiRes;
-        newApiRes.setData(data);
-        return Mono.just(newApiRes);
+    private Mono<ApiRes<GetUnitRes>> prepareCurrentResponse(JsonNode responseFromArchive) {
+        ApiRes<GetUnitRes> castedResponseFromArchive = objectMapper.readValue(
+            responseFromArchive.traverse(),
+            archiveResponseType
+        );
+
+        ApiRes<GetUnitDetailedRes> aggregatedResponse = new ApiRes<>();
+
+//        aggregatedResponse.setId(UUID.fromString(responseFromArchive.t("id").toString()));
+//        aggregatedResponse.setTimestamp(Timestamp.valueOf(responseFromArchive.));
+        return Mono.empty();
     }
 
+//    private UUID id;
+//    private Timestamp timestamp;
+//    private T data;
+//    private Collection<String> warnings = new ArrayList();
+//    private Collection<String> errors = new ArrayList();
 
-
-    private Mono<ApiRes<GetLatestRes>> getUrls(String number) {
+    private Mono<ApiRes<GetLatestRes>> fetchUrls(String number) {
         return WebClient.builder()
             .baseUrl(filesUrl)
             .build()

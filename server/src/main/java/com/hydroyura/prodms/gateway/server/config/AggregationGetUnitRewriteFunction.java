@@ -7,15 +7,13 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hydroyura.prodms.archive.client.model.api.ApiRes;
 import com.hydroyura.prodms.archive.client.model.res.GetUnitRes;
-import com.hydroyura.prodms.files.server.api.res.GetLatestRes;
+import com.hydroyura.prodms.files.server.api.res.GetUrlsLatestRes;
+import com.hydroyura.prodms.gateway.server.mapper.GetUnitResToGetUnitDetailResMapper;
 import com.hydroyura.prodms.gateway.server.model.res.GetUnitDetailedRes;
 import jakarta.annotation.PostConstruct;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
@@ -35,10 +33,13 @@ import reactor.core.publisher.Mono;
 @Component
 @SuppressWarnings("rawtypes")
 @Slf4j
+@RequiredArgsConstructor
 public class AggregationGetUnitRewriteFunction implements RewriteFunction<JsonNode, ApiRes> {
 
     @Value("${microservices.urls.files}")
     private String filesUrl;
+
+    private final GetUnitResToGetUnitDetailResMapper getUnitResToGetUnitDetailResMapper;
 
     //TODO: replace with bean
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -64,15 +65,11 @@ public class AggregationGetUnitRewriteFunction implements RewriteFunction<JsonNo
         String number = extractNumberFromRequest(serverWebExchange);
 
         if (isSuccessRequestToArchive) {
-            Mono.zip(prepareCurrentResponse(responseFromArchive), fetchUrls(number));
+            return Mono
+                .zip(prepareCurrentResponse(responseFromArchive), fetchUrls(number))
+                .map(tuple -> aggregate(tuple.getT1(), tuple.getT2()));
         }
         throw new RuntimeException("Need to handle case when got bad result from Archive");
-
-
-//        return Mono
-//            .zip(prepareCurrentResponse(apiRes), getUrls(number))
-//            .map(tuple -> aggregate(tuple.getT1(), tuple.getT2()));
-        //return Mono.empty();
     }
 
     //TODO: handle error
@@ -84,27 +81,18 @@ public class AggregationGetUnitRewriteFunction implements RewriteFunction<JsonNo
             .orElseThrow(() -> new RuntimeException("Handle it!"));
     }
 
+    //TODO: handle error
     @SneakyThrows
     private Mono<ApiRes<GetUnitRes>> prepareCurrentResponse(JsonNode responseFromArchive) {
         ApiRes<GetUnitRes> castedResponseFromArchive = objectMapper.readValue(
             responseFromArchive.traverse(),
             archiveResponseType
         );
-
-        ApiRes<GetUnitDetailedRes> aggregatedResponse = new ApiRes<>();
-
-//        aggregatedResponse.setId(UUID.fromString(responseFromArchive.t("id").toString()));
-//        aggregatedResponse.setTimestamp(Timestamp.valueOf(responseFromArchive.));
-        return Mono.empty();
+        return Mono.just(castedResponseFromArchive);
     }
 
-//    private UUID id;
-//    private Timestamp timestamp;
-//    private T data;
-//    private Collection<String> warnings = new ArrayList();
-//    private Collection<String> errors = new ArrayList();
-
-    private Mono<ApiRes<GetLatestRes>> fetchUrls(String number) {
+    // TODO: fetch exception
+    private Mono<ApiRes<GetUrlsLatestRes>> fetchUrls(String number) {
         return WebClient.builder()
             .baseUrl(filesUrl)
             .build()
@@ -112,10 +100,12 @@ public class AggregationGetUnitRewriteFunction implements RewriteFunction<JsonNo
             .uri("/api/v1/drawings/{number}", number)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<ApiRes<GetLatestRes>>() {});
+            .bodyToMono(new ParameterizedTypeReference<ApiRes<GetUrlsLatestRes>>() {});
     }
 
-    private ApiRes<GetUnitDetailedRes> aggregate(ApiRes<GetUnitRes> archiveRes, ApiRes<GetLatestRes> filesRes) {
+    private ApiRes<GetUnitDetailedRes> aggregate(ApiRes<GetUnitRes> archiveRes, ApiRes<GetUrlsLatestRes> filesRes) {
+
+        GetUnitDetailedRes completedResponse = getUnitResToGetUnitDetailResMapper.convertWithUrls(archiveRes.getData(), filesRes.getData());
 
         return new ApiRes<>();
     }

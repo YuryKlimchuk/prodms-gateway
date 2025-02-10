@@ -104,10 +104,14 @@ public class AggregationGetUnitRewriteFunction implements RewriteFunction<JsonNo
     }
 
     private ApiRes<GetUnitDetailedRes> aggregate(ApiRes<GetUnitRes> archiveRes, ApiRes<GetUrlsLatestRes> filesRes) {
-
-        GetUnitDetailedRes completedResponse = getUnitResToGetUnitDetailResMapper.convertWithUrls(archiveRes.getData(), filesRes.getData());
-
-        return new ApiRes<>();
+        GetUnitDetailedRes data = getUnitResToGetUnitDetailResMapper.convertWithUrls(archiveRes.getData(), filesRes.getData());
+        ApiRes<GetUnitDetailedRes> completedRes = new ApiRes<>();
+        completedRes.setData(data);
+        completedRes.setId(archiveRes.getId());
+        completedRes.setTimestamp(archiveRes.getTimestamp());
+        completedRes.setErrors(archiveRes.getErrors());
+        completedRes.setWarnings(archiveRes.getWarnings());
+        return completedRes;
     }
 
 
